@@ -1,2 +1,2 @@
 # JRP
-A custom  render pipeline based on the SRP
+A custom render pipeline
