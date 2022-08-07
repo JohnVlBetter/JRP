@@ -18,23 +18,29 @@ public partial class CameraRenderer{
         this.camera = _camera;
         this.context = _context;
 
+        PrepareBuffer();
+        //在剔除前绘制世界UI
+        PrepareForSceneWindow();
         if (!Cull()) return;
 
         SetupCameraProperties();
         DrawVisibleGeometry();
         DrawUnsupportedShaders();
+        DrawGizmos();
         Submit();
     }
 
     private void SetupCameraProperties()
     {
         context.SetupCameraProperties(camera);
-        commandBuffer.ClearRenderTarget(true, true, Color.clear);
-        commandBuffer.BeginSample(bufferName);
+        CameraClearFlags flags = camera.clearFlags;
+        commandBuffer.ClearRenderTarget(
+            flags <= CameraClearFlags.Depth,
+            flags == CameraClearFlags.Color,
+            flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
+        commandBuffer.BeginSample(sampleName);
         ExecuteBuffer();
     }
-
-    private partial void DrawUnsupportedShaders();
 
     private void DrawVisibleGeometry() {
         //先绘制不透明物体
@@ -57,7 +63,7 @@ public partial class CameraRenderer{
 
     private void Submit()
     {
-        commandBuffer.EndSample(bufferName);
+        commandBuffer.EndSample(sampleName);
         ExecuteBuffer();
         context.Submit();
     }
