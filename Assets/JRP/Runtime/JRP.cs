@@ -13,6 +13,7 @@ public class JRP : RenderPipeline{
         this.useDynamicBatching = _useDynamicBatching;
         this.useGPUInstancing = _useGPUInstancing;
         GraphicsSettings.useScriptableRenderPipelineBatching = _useSRPBatcher;
+        GraphicsSettings.lightsUseLinearIntensity = true;
     }
 
     protected override void Render(ScriptableRenderContext context, Camera[] cameras){

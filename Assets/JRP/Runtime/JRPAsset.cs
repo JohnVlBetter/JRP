@@ -13,5 +13,4 @@ public class JRPAsset : RenderPipelineAsset
     {
         return new JRP(useDynamicBatching, useGPUInstancing, useSRPBatcher);
     }
-
 }

@@ -14,7 +14,6 @@ public partial class CameraRenderer{
     private partial void PrepareBuffer();
 
 #if UNITY_EDITOR
-    private static ShaderTagId unlitShaderTagID = new ShaderTagId("SRPDefaultUnlit");
     private static ShaderTagId[] unsupportedShaderTagIds = {
         new ShaderTagId("Always"),
         new ShaderTagId("ForwardBase"),
