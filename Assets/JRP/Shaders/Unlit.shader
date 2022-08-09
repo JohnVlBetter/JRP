@@ -27,4 +27,6 @@ Shader "JRP/Unlit/Unlit" {
 			ENDHLSL
 		}
 	}
+
+    CustomEditor "CustomShaderGUI"
 }

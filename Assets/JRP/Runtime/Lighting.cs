@@ -14,8 +14,13 @@ public class Lighting
 	private static int dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors");
 	private static int dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
 
+	private static int metallicId = Shader.PropertyToID("_Metallic");
+	private static int smoothnessId = Shader.PropertyToID("_Smoothness");
+
 	private static Vector4[] dirLightColors = new Vector4[maxDirLightCount];
 	private static Vector4[] dirLightDirections = new Vector4[maxDirLightCount];
+	private static float[] metallic = new float[1023];
+	private static float[] smoothness = new float[1023];
 
 	private CullingResults cullingResults;
 
