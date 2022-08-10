@@ -20,20 +20,31 @@ public partial class CameraRenderer{
     private Lighting lighting = new Lighting();
 
     public void Render(ScriptableRenderContext _context, Camera _camera,
-        bool useDynamicBatching, bool useGPUInstancing) { 
+        bool useDynamicBatching, bool useGPUInstancing, ShadowSettings _shadowSettings) { 
         this.camera = _camera;
         this.context = _context;
 
         PrepareBuffer();
         //在剔除前绘制世界UI
         PrepareForSceneWindow();
-        if (!Cull()) return;
+
+        if (!Cull(_shadowSettings.maxDistance)) return;
+
+        commandBuffer.BeginSample(sampleName);
+        ExecuteBuffer();
+        lighting.Setup(context, cullingResults, _shadowSettings);
+        commandBuffer.EndSample(sampleName);
 
         SetupCameraProperties();
-        lighting.Setup(context, cullingResults);
+
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
+
         DrawUnsupportedShaders();
+
         DrawGizmos();
+
+        lighting.Cleanup();
+
         Submit();
     }
 
@@ -85,8 +96,9 @@ public partial class CameraRenderer{
         commandBuffer.Clear();
     }
 
-    private bool Cull() {
+    private bool Cull(float maxShadowDistance) {
         if (camera.TryGetCullingParameters(out ScriptableCullingParameters scp)) {
+            scp.shadowDistance = Mathf.Min(maxShadowDistance, camera.farClipPlane);
             cullingResults = context.Cull(ref scp);
             return true;
         }
