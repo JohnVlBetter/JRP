@@ -15,6 +15,8 @@ public class Shadows
 	private ShadowSettings settings;
 
 	private const int maxShadowedDirectionalLightCount = 4, maxCascades = 4;
+	
+	private bool useShadowMask; 
 
 	struct ShadowedDirectionalLight{
 		public int visibleLightIndex;
@@ -49,6 +51,10 @@ public class Shadows
 		"_CASCADE_BLEND_SOFT",
 		"_CASCADE_BLEND_DITHER"
 	};
+	
+	static string[] shadowMaskKeywords = {
+		"_SHADOW_MASK_DISTANCE"
+	};
 
 	public void Render()
 	{
@@ -61,6 +67,11 @@ public class Shadows
 			commandBuffer.GetTemporaryRT(dirShadowAtlasId, 1, 1,
 				32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
 		}
+		
+		commandBuffer.BeginSample(bufferName);
+		SetKeywords(shadowMaskKeywords, useShadowMask ? 0 : -1);
+		commandBuffer.EndSample(bufferName);
+		ExecuteBuffer();
 	}
 
 	void RenderDirectionalShadows() {
@@ -200,6 +211,12 @@ public class Shadows
 		if (ShadowedDirectionalLightCount < maxShadowedDirectionalLightCount &&
 			light.shadows != LightShadows.None && light.shadowStrength > 0f &&
 			cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)){
+			LightBakingOutput lightBaking = light.bakingOutput;
+			if (lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
+				lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask) {
+				useShadowMask = true;
+			}
+			
 			ShadowedDirectionalLights[ShadowedDirectionalLightCount] =
 				new ShadowedDirectionalLight{ 
 					visibleLightIndex = visibleLightIndex,
@@ -214,7 +231,9 @@ public class Shadows
 	}
 
 	public void Setup(ScriptableRenderContext _context, CullingResults _cullingResults,
-					  ShadowSettings _shadowSettings){
+					  ShadowSettings _shadowSettings)
+	{
+		this.useShadowMask = false;
 		this.context = _context;
 		this.cullingResults = _cullingResults;
 		this.settings = _shadowSettings;
