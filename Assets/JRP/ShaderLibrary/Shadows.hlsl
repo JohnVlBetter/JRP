@@ -34,6 +34,7 @@ struct DirectionalShadowData {
 	float strength;
 	int   tileIndex;
 	float normalBias;
+	int shadowMaskChannel;
 };
 
 struct ShadowMask {
@@ -127,16 +128,25 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData global, S
 	return shadow;
 }
 
-float GetBakedShadow (ShadowMask mask) {
+float GetBakedShadow (ShadowMask mask, int channel) {
 	float shadow = 1.0;
-	if (mask.always ||mask.distance) {
-		shadow = mask.shadows.r;
+	if (mask.always || mask.distance) {
+		if (channel >= 0) {
+			shadow = mask.shadows[channel];
+		}
 	}
 	return shadow;
 }
 
-float MixBakedAndRealtimeShadows (ShadowData global, float shadow, float strength) {
-	float baked = GetBakedShadow(global.shadowMask);
+float GetBakedShadow (ShadowMask mask, int channel, float strength) {
+	if (mask.always || mask.distance) {
+		return lerp(1.0, GetBakedShadow(mask, channel), strength);
+	}
+	return 1.0;
+}
+
+float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {
+	float baked = GetBakedShadow(global.shadowMask,shadowMaskChannel);
 	if (global.shadowMask.always) {
 		shadow = lerp(1.0, shadow, global.strength);
 		shadow = min(baked, shadow);
@@ -149,13 +159,6 @@ float MixBakedAndRealtimeShadows (ShadowData global, float shadow, float strengt
 	return lerp(1.0, shadow, strength * global.strength);
 }
 
-float GetBakedShadow (ShadowMask mask, float strength) {
-	if (mask.always ||mask.distance) {
-		return lerp(1.0, GetBakedShadow(mask), strength);
-	}
-	return 1.0;
-}
-
 float GetDirectionalShadowAttenuation (DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
 	#if !defined(_RECEIVE_SHADOWS)
 		return 1.0;
@@ -163,11 +166,11 @@ float GetDirectionalShadowAttenuation (DirectionalShadowData directional, Shadow
 	
 	float shadow;
 	if (directional.strength * global.strength <= 0.0) {
-		shadow = GetBakedShadow(global.shadowMask, abs(directional.strength));
+		shadow = GetBakedShadow(global.shadowMask, directional.shadowMaskChannel, abs(directional.strength));
 	}
 	else {
 		shadow = GetCascadedShadow(directional, global, surfaceWS);
-		shadow = MixBakedAndRealtimeShadows(global, shadow, directional.strength);
+		shadow = MixBakedAndRealtimeShadows(global, shadow, directional.shadowMaskChannel, directional.strength);
 	}
 	return shadow;
 }
