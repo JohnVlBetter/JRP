@@ -21,6 +21,10 @@ float4 GetBase (float2 baseUV) {
 	return baseMap * baseColor;
 }
 
+float GetFresnel (float2 baseUV) {
+	return 0.0;
+}
+
 float3 GetEmission (float2 baseUV) {
 	return GetBase(baseUV).rgb;
 }

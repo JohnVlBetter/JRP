@@ -23,6 +23,7 @@ CBUFFER_START(UnityPerDraw)
 	float4   unity_ProbeVolumeSizeInv;
 	float4   unity_ProbeVolumeMin;
 	float4 unity_ProbesOcclusion;
+	float4 unity_SpecCube0_HDR;
 CBUFFER_END
 
 float3   _WorldSpaceCameraPos;
