@@ -8,12 +8,19 @@ public class Lighting
 
 	private CommandBuffer commandBuffer = new CommandBuffer{ name = bufferName };
 
-	private const int maxDirLightCount = 4;
+	private const int maxDirLightCount = 4, maxOtherLightCount = 64;
 
 	private static int dirLightCountId = Shader.PropertyToID("_DirectionalLightCount");
 	private static int dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors");
 	private static int dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
 	private static int dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
+
+	private static int otherLightCountId = Shader.PropertyToID("_OtherLightCount");
+	private static int otherLightColorsId = Shader.PropertyToID("_OtherLightColors");
+	private static int otherLightPositionsId = Shader.PropertyToID("_OtherLightPositions");
+
+	private static Vector4[] otherLightColors = new Vector4[maxOtherLightCount];
+	private static Vector4[] otherLightPositions = new Vector4[maxOtherLightCount];
 
 	private static int metallicId = Shader.PropertyToID("_Metallic");
 	private static int smoothnessId = Shader.PropertyToID("_Smoothness");
@@ -47,21 +54,45 @@ public class Lighting
 
 	void SetupLights() {
 		NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
-
-		for (int dirLightCount = 0; dirLightCount < visibleLights.Length; dirLightCount++)
+		int dirLightCount = 0, otherLightCount = 0;
+		for (int i = 0; i < visibleLights.Length; i++)
 		{
-			VisibleLight visibleLight = visibleLights[dirLightCount];
-			if (visibleLight.lightType != LightType.Directional) continue;
-			SetupDirectionalLight(dirLightCount, ref visibleLight);
-			if (dirLightCount >= maxDirLightCount) break;
+			VisibleLight visibleLight = visibleLights[i];
+			switch (visibleLight.lightType) {
+				case LightType.Directional:
+					if (dirLightCount < maxDirLightCount) {
+						SetupDirectionalLight(dirLightCount++, ref visibleLight);
+					}
+					break;
+				case LightType.Point:
+					if (otherLightCount < maxOtherLightCount) {
+						SetupPointLight(otherLightCount++, ref visibleLight);
+					}
+					break;
+			}
 		}
 
 		commandBuffer.SetGlobalInt(dirLightCountId, visibleLights.Length);
-		commandBuffer.SetGlobalVectorArray(dirLightColorsId, dirLightColors);
-		commandBuffer.SetGlobalVectorArray(dirLightDirectionsId, dirLightDirections);
-		commandBuffer.SetGlobalVectorArray(dirLightShadowDataId, dirLightShadowData);
+		if (dirLightCount > 0) {
+			commandBuffer.SetGlobalVectorArray(dirLightColorsId, dirLightColors);
+			commandBuffer.SetGlobalVectorArray(dirLightDirectionsId, dirLightDirections);
+			commandBuffer.SetGlobalVectorArray(dirLightShadowDataId, dirLightShadowData);
+		}
+
+		commandBuffer.SetGlobalInt(otherLightCountId, otherLightCount);
+		if (otherLightCount > 0) {
+			commandBuffer.SetGlobalVectorArray(otherLightColorsId, otherLightColors);
+			commandBuffer.SetGlobalVectorArray(otherLightPositionsId, otherLightPositions);
+		}
 	}
 
+	void SetupPointLight (int index, ref VisibleLight visibleLight) {
+		otherLightColors[index] = visibleLight.finalColor;
+		Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
+		position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+		otherLightPositions[index] = position;
+	}
+	
 	void SetupDirectionalLight(int index, ref VisibleLight visibleLight)
 	{
 		dirLightColors[index] = visibleLight.finalColor;

@@ -30,10 +30,6 @@ BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	return brdf;
 }
 
-float Square (float v) {
-	return v * v;
-}
-
 float3 IndirectBRDF (Surface surface, BRDF brdf, float3 diffuse, float3 specular) {
 	float fresnelStrength = surface.fresnelStrength * Pow4(1.0 - saturate(dot(surface.normal, surface.viewDirection)));
 	float3 reflection = specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
