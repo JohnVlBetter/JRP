@@ -7,13 +7,15 @@ using UnityEngine.Rendering;
 public class JRPAsset : RenderPipelineAsset
 {
     [SerializeField]
-    private bool useDynamicBatching = true, useGPUInstancing = true, useSRPBatcher = true;
+    private bool useDynamicBatching = true, useGPUInstancing = true, useSRPBatcher = true,
+        useLightsPerObject = true;
 
     [SerializeField]
     ShadowSettings shadows = default;
 
     protected override RenderPipeline CreatePipeline()
     {
-        return new JRP(useDynamicBatching, useGPUInstancing, useSRPBatcher, shadows);
+        return new JRP(useDynamicBatching, useGPUInstancing,
+            useLightsPerObject, useSRPBatcher, shadows);
     }
 }

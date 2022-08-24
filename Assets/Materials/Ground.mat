@@ -90,11 +90,11 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _MaskMapToggle: 0
-    - _Metallic: 1
+    - _Metallic: 0.321
     - _Mode: 0
     - _NormalMapToggle: 0
     - _NormalScale: 1
-    - _Occlusion: 1
+    - _Occlusion: 0.206
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _PremulAlpha: 0

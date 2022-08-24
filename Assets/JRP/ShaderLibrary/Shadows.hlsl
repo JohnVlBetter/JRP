@@ -50,6 +50,45 @@ struct ShadowData {
 	ShadowMask shadowMask;
 };
 
+struct OtherShadowData {
+	float strength;
+	int shadowMaskChannel;
+};
+
+float GetBakedShadow (ShadowMask mask, int channel) {
+	float shadow = 1.0;
+	if (mask.always || mask.distance) {
+		if (channel >= 0) {
+			shadow = mask.shadows[channel];
+		}
+	}
+	return shadow;
+}
+
+float GetBakedShadow (ShadowMask mask, int channel, float strength) {
+	if (mask.always || mask.distance) {
+		return lerp(1.0, GetBakedShadow(mask, channel), strength);
+	}
+	return 1.0;
+}
+
+float GetOtherShadowAttenuation (OtherShadowData other, ShadowData global, Surface surfaceWS) {
+	#if !defined(_RECEIVE_SHADOWS)
+	return 1.0;
+	#endif
+	
+	float shadow;
+	if (other.strength > 0.0) {
+		shadow = GetBakedShadow(
+			global.shadowMask, other.shadowMaskChannel, other.strength
+		);
+	}
+	else {
+		shadow = 1.0;
+	}
+	return shadow;
+}
+
 float FadedShadowStrength (float distance, float scale, float fade) {
 	return saturate((1.0 - distance * scale) * fade);
 }
@@ -126,23 +165,6 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData global, S
 		shadow = lerp(FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
 	}
 	return shadow;
-}
-
-float GetBakedShadow (ShadowMask mask, int channel) {
-	float shadow = 1.0;
-	if (mask.always || mask.distance) {
-		if (channel >= 0) {
-			shadow = mask.shadows[channel];
-		}
-	}
-	return shadow;
-}
-
-float GetBakedShadow (ShadowMask mask, int channel, float strength) {
-	if (mask.always || mask.distance) {
-		return lerp(1.0, GetBakedShadow(mask, channel), strength);
-	}
-	return 1.0;
 }
 
 float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {

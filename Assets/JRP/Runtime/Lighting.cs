@@ -14,6 +14,7 @@ public class Lighting
 	private static int dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors");
 	private static int dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
 	private static int dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
+	private static int otherLightShadowDataId = Shader.PropertyToID("_OtherLightShadowData");
 
 	private static int otherLightCountId = Shader.PropertyToID("_OtherLightCount");
 	private static int otherLightColorsId = Shader.PropertyToID("_OtherLightColors");
@@ -25,6 +26,7 @@ public class Lighting
 	private static Vector4[] otherLightPositions = new Vector4[maxOtherLightCount];
 	private static Vector4[] otherLightDirections = new Vector4[maxOtherLightCount];
 	private static Vector4[] otherLightSpotAngles = new Vector4[maxOtherLightCount];
+	private static Vector4[] otherLightShadowData = new Vector4[maxOtherLightCount];
 
 	private static int metallicId = Shader.PropertyToID("_Metallic");
 	private static int smoothnessId = Shader.PropertyToID("_Smoothness");
@@ -38,14 +40,16 @@ public class Lighting
 
 	private CullingResults cullingResults;
 	private Shadows shadows = new Shadows();
+	
+	static string lightsPerObjectKeyword = "_LIGHTS_PER_OBJECT";
 
 	public void Setup(ScriptableRenderContext _context, CullingResults _cullingResults, 
-					  ShadowSettings _shadowSettings)
+					  ShadowSettings _shadowSettings, bool useLightsPerObject)
 	{
 		this.cullingResults = _cullingResults;
 		commandBuffer.BeginSample(bufferName);
 		shadows.Setup(_context, cullingResults, _shadowSettings);
-		SetupLights();
+		SetupLights(useLightsPerObject);
 		shadows.Render();
 		commandBuffer.EndSample(bufferName);
 		_context.ExecuteCommandBuffer(commandBuffer);
@@ -56,11 +60,14 @@ public class Lighting
 		shadows.Cleanup();
 	}
 
-	void SetupLights() {
+	void SetupLights(bool useLightsPerObject) {
+		NativeArray<int> indexMap = useLightsPerObject ? cullingResults.GetLightIndexMap(Allocator.Temp) : default;
 		NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
 		int dirLightCount = 0, otherLightCount = 0;
-		for (int i = 0; i < visibleLights.Length; i++)
+		int i;
+		for (i = 0; i < visibleLights.Length; i++)
 		{
+			int newIndex = -1;
 			VisibleLight visibleLight = visibleLights[i];
 			switch (visibleLight.lightType) {
 				case LightType.Directional:
@@ -70,15 +77,31 @@ public class Lighting
 					break;
 				case LightType.Point:
 					if (otherLightCount < maxOtherLightCount) {
+						newIndex = otherLightCount;
 						SetupPointLight(otherLightCount++, ref visibleLight);
 					}
 					break;
 				case LightType.Spot:
 					if (otherLightCount < maxOtherLightCount) {
+						newIndex = otherLightCount;
 						SetupSpotLight(otherLightCount++, ref visibleLight);
 					}
 					break;
 			}
+			if (useLightsPerObject) {
+				indexMap[i] = newIndex;
+			}
+		}
+		if (useLightsPerObject) {
+			for (; i < indexMap.Length; i++) {
+				indexMap[i] = -1;
+			}
+			cullingResults.SetLightIndexMap(indexMap);
+			indexMap.Dispose();
+			Shader.EnableKeyword(lightsPerObjectKeyword);
+		}
+		else {
+			Shader.DisableKeyword(lightsPerObjectKeyword);
 		}
 
 		commandBuffer.SetGlobalInt(dirLightCountId, visibleLights.Length);
@@ -94,6 +117,7 @@ public class Lighting
 			commandBuffer.SetGlobalVectorArray(otherLightPositionsId, otherLightPositions);
 			commandBuffer.SetGlobalVectorArray(otherLightDirectionsId, otherLightDirections);
 			commandBuffer.SetGlobalVectorArray(otherLightSpotAnglesId, otherLightSpotAngles);
+			commandBuffer.SetGlobalVectorArray(otherLightShadowDataId, otherLightShadowData);
 		}
 	}
 	
@@ -108,6 +132,7 @@ public class Lighting
 		float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * visibleLight.spotAngle);
 		float angleRangeInv = 1f / Mathf.Max(innerCos - outerCos, 0.001f);
 		otherLightSpotAngles[index] = new Vector4(angleRangeInv, -outerCos * angleRangeInv);
+		otherLightShadowData[index] = shadows.ReserveOtherShadows(light, index);
 	}
 
 	void SetupPointLight (int index, ref VisibleLight visibleLight) {
@@ -116,6 +141,8 @@ public class Lighting
 		position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
 		otherLightPositions[index] = position;
 		otherLightSpotAngles[index] = new Vector4(0f, 1f);
+		Light light = visibleLight.light;
+		otherLightShadowData[index] = shadows.ReserveOtherShadows(light, index);
 	}
 	
 	void SetupDirectionalLight(int index, ref VisibleLight visibleLight)
