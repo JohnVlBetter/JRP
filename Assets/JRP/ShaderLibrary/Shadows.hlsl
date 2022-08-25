@@ -72,19 +72,38 @@ float GetBakedShadow (ShadowMask mask, int channel, float strength) {
 	return 1.0;
 }
 
+float GetOtherShadow (OtherShadowData other, ShadowData global, Surface surfaceWS) {
+	return 1.0;
+}
+
+float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {
+	float baked = GetBakedShadow(global.shadowMask,shadowMaskChannel);
+	if (global.shadowMask.always) {
+		shadow = lerp(1.0, shadow, global.strength);
+		shadow = min(baked, shadow);
+		return lerp(1.0, shadow, strength);
+	}
+	if (global.shadowMask.distance) {
+		shadow = lerp(baked, shadow, global.strength);
+		return lerp(1.0, shadow, strength);
+	}
+	return lerp(1.0, shadow, strength * global.strength);
+}
+
 float GetOtherShadowAttenuation (OtherShadowData other, ShadowData global, Surface surfaceWS) {
 	#if !defined(_RECEIVE_SHADOWS)
 	return 1.0;
 	#endif
 	
 	float shadow;
-	if (other.strength > 0.0) {
+	if (other.strength * global.strength <= 0.0 > 0.0) {
 		shadow = GetBakedShadow(
-			global.shadowMask, other.shadowMaskChannel, other.strength
+			global.shadowMask, other.shadowMaskChannel, abs(other.strength)
 		);
 	}
 	else {
-		shadow = 1.0;
+		shadow = GetOtherShadow(other, global, surfaceWS);
+		shadow = MixBakedAndRealtimeShadows(global, shadow, other.shadowMaskChannel, other.strength);
 	}
 	return shadow;
 }
@@ -137,7 +156,7 @@ ShadowData GetShadowData (Surface surfaceWS) {
 			break;
 		}
 	}
-	if (i == _CascadeCount) {
+	if (i == _CascadeCount && _CascadeCount > 0) {
 		data.strength = 0.0;
 	}
 	#if defined(_CASCADE_BLEND_DITHER)
@@ -165,20 +184,6 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData global, S
 		shadow = lerp(FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
 	}
 	return shadow;
-}
-
-float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {
-	float baked = GetBakedShadow(global.shadowMask,shadowMaskChannel);
-	if (global.shadowMask.always) {
-		shadow = lerp(1.0, shadow, global.strength);
-		shadow = min(baked, shadow);
-		return lerp(1.0, shadow, strength);
-	}
-	if (global.shadowMask.distance) {
-		shadow = lerp(baked, shadow, global.strength);
-		return lerp(1.0, shadow, strength);
-	}
-	return lerp(1.0, shadow, strength * global.strength);
 }
 
 float GetDirectionalShadowAttenuation (DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
