@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b7f2f6c933993b49ab964fe1755c215, type: 3}
+  m_Name: bloom
+  m_EditorClassIdentifier: 
+  shader: {fileID: 4800000, guid: 9e24d845243b9ec45826dbbe7ff9c10e, type: 3}

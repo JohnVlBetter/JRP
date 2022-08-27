@@ -13,9 +13,12 @@ public class JRPAsset : RenderPipelineAsset
     [SerializeField]
     ShadowSettings shadows = default;
 
+    [SerializeField]
+    PostFXSettings postFXSettings = default;
+    
     protected override RenderPipeline CreatePipeline()
     {
         return new JRP(useDynamicBatching, useGPUInstancing,
-            useLightsPerObject, useSRPBatcher, shadows);
+            useLightsPerObject, useSRPBatcher, shadows, postFXSettings);
     }
 }

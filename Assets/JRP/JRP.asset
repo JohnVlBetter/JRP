@@ -31,3 +31,4 @@ MonoBehaviour:
     other:
       atlasSize: 2048
       filter: 3
+  postFXSettings: {fileID: 11400000, guid: e8c43fc392b19624fa64a617c58c4387, type: 2}
