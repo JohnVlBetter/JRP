@@ -5,8 +5,10 @@ using UnityEngine.Rendering;
 [CreateAssetMenu(menuName = "Rendering/JRP")]
 public class JRPAsset : RenderPipelineAsset
 {
+    [SerializeField]
+    bool useDynamicBatching = false, useGPUInstancing = true, useSRPBatcher = true;
     protected override RenderPipeline CreatePipeline()
     {
-        return new JRenderPipeline();
+        return new JRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher);
     }
 }

@@ -5,6 +5,15 @@ using UnityEngine.Rendering;
 public class JRenderPipeline : RenderPipeline
 {
     JRenderer renderer = new JRenderer();
+    bool useDynamicBatching, useGPUInstancing;
+
+    public JRenderPipeline(bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher)
+    {
+        this.useDynamicBatching = useDynamicBatching;
+        this.useGPUInstancing = useGPUInstancing;
+        GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
+    }
+
     protected override void Render(ScriptableRenderContext context, Camera[] cameras)
     {
     }
@@ -13,7 +22,7 @@ public class JRenderPipeline : RenderPipeline
     {
         for (int i = 0; i < cameras.Count; i++)
         {
-            renderer.Render(context, cameras[i]);
+            renderer.Render(context, cameras[i], useDynamicBatching, useGPUInstancing);
         }
     }
 }
