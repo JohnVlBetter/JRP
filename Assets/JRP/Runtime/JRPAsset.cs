@@ -7,8 +7,12 @@ public class JRPAsset : RenderPipelineAsset
 {
     [SerializeField]
     bool useDynamicBatching = false, useGPUInstancing = true, useSRPBatcher = true;
+
+    [SerializeField]
+	ShadowSettings shadows = default;
+
     protected override RenderPipeline CreatePipeline()
     {
-        return new JRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher);
+        return new JRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher, shadows);
     }
 }
