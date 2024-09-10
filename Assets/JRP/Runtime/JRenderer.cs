@@ -99,7 +99,8 @@ public partial class JRenderer
         )
         {
             enableDynamicBatching = useDynamicBatching,
-            enableInstancing = useGPUInstancing
+            enableInstancing = useGPUInstancing,
+			perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe
         };
         drawingSettings.SetShaderPassName(1, litShaderTagId);
 
