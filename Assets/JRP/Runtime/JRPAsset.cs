@@ -9,7 +9,7 @@ public class JRPAsset : RenderPipelineAsset
     bool useDynamicBatching = false, useGPUInstancing = true, useSRPBatcher = true;
 
     [SerializeField]
-	ShadowSettings shadows = default;
+    ShadowSettings shadows = default;
 
     protected override RenderPipeline CreatePipeline()
     {
