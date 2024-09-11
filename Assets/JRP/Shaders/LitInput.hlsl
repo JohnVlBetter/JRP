@@ -27,6 +27,13 @@ float4 GetBase(float2 baseUV)
     return map * color;
 }
 
+float3 GetEmission(float2 baseUV)
+{
+    float4 map = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, baseUV);
+    float4 color = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor);
+    return map.rgb * color.rgb;
+}
+
 float GetCutoff(float2 baseUV)
 {
     return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff);
@@ -40,13 +47,6 @@ float GetMetallic(float2 baseUV)
 float GetSmoothness(float2 baseUV)
 {
     return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
-}
-
-float3 GetEmission(float2 baseUV)
-{
-    float4 map = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, baseUV);
-    float4 color = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor);
-    return map.rgb * color.rgb;
 }
 
 #endif

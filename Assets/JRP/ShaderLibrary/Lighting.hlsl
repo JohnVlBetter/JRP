@@ -3,7 +3,9 @@
 
 float3 IncomingLight(Surface surface, Light light)
 {
-    return saturate(dot(surface.normal, light.direction) * light.attenuation) * light.color;
+    return
+    saturate(dot(surface.normal, light.direction) * light.attenuation) *
+    light.color;
 }
 
 float3 GetLighting(Surface surface, BRDF brdf, Light light)
@@ -14,6 +16,8 @@ float3 GetLighting(Surface surface, BRDF brdf, Light light)
 float3 GetLighting(Surface surfaceWS, BRDF brdf, GI gi)
 {
     ShadowData shadowData = GetShadowData(surfaceWS);
+    shadowData.shadowMask = gi.shadowMask;
+    
     float3 color = gi.diffuse * brdf.diffuse;
     for (int i = 0; i < GetDirectionalLightCount(); i++)
     {

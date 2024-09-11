@@ -3,7 +3,6 @@ using UnityEngine.Rendering;
 
 public class Shadows
 {
-
     const string bufferName = "Shadows";
 
     const int maxShadowedDirLightCount = 4, maxCascades = 4;
@@ -17,6 +16,11 @@ public class Shadows
     static string[] cascadeBlendKeywords = {
         "_CASCADE_BLEND_SOFT",
         "_CASCADE_BLEND_DITHER"
+    };
+
+    static string[] shadowMaskKeywords = {
+        "_SHADOW_MASK_ALWAYS",
+        "_SHADOW_MASK_DISTANCE"
     };
 
     static int
@@ -58,6 +62,8 @@ public class Shadows
 
     ShadowSettings settings;
 
+    bool useShadowMask;
+
     public void Setup(
         ScriptableRenderContext context, CullingResults cullingResults,
         ShadowSettings settings
@@ -67,6 +73,7 @@ public class Shadows
         this.cullingResults = cullingResults;
         this.settings = settings;
         shadowedDirLightCount = 0;
+        useShadowMask = false;
     }
 
     public void Cleanup()
@@ -75,16 +82,33 @@ public class Shadows
         ExecuteBuffer();
     }
 
-    public Vector3 ReserveDirectionalShadows(
+    public Vector4 ReserveDirectionalShadows(
         Light light, int visibleLightIndex
     )
     {
         if (
             shadowedDirLightCount < maxShadowedDirLightCount &&
-            light.shadows != LightShadows.None && light.shadowStrength > 0f &&
-            cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
+            light.shadows != LightShadows.None && light.shadowStrength > 0f
         )
         {
+            float maskChannel = -1;
+            LightBakingOutput lightBaking = light.bakingOutput;
+            if (
+                lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
+                lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
+            )
+            {
+                useShadowMask = true;
+                maskChannel = lightBaking.occlusionMaskChannel;
+            }
+
+            if (!cullingResults.GetShadowCasterBounds(
+                visibleLightIndex, out Bounds b
+            ))
+            {
+                return new Vector4(-light.shadowStrength, 0f, 0f, maskChannel);
+            }
+
             shadowedDirectionalLights[shadowedDirLightCount] =
                 new ShadowedDirectionalLight
                 {
@@ -92,13 +116,13 @@ public class Shadows
                     slopeScaleBias = light.shadowBias,
                     nearPlaneOffset = light.shadowNearPlane
                 };
-            return new Vector3(
+            return new Vector4(
                 light.shadowStrength,
                 settings.directional.cascadeCount * shadowedDirLightCount++,
-                light.shadowNormalBias
+                light.shadowNormalBias, maskChannel
             );
         }
-        return Vector3.zero;
+        return new Vector4(0f, 0f, 0f, -1f);
     }
 
     public void Render()
@@ -114,6 +138,13 @@ public class Shadows
                 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
             );
         }
+        buffer.BeginSample(bufferName);
+        SetKeywords(shadowMaskKeywords, useShadowMask ?
+            QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1 :
+            -1
+        );
+        buffer.EndSample(bufferName);
+        ExecuteBuffer();
     }
 
     void RenderDirectionalShadows()
@@ -184,10 +215,11 @@ public class Shadows
     void RenderDirectionalShadows(int index, int split, int tileSize)
     {
         ShadowedDirectionalLight light = shadowedDirectionalLights[index];
-        var shadowSettings = new ShadowDrawingSettings(
-            cullingResults, light.visibleLightIndex,
-            BatchCullingProjectionType.Orthographic
-        );
+        var shadowSettings =
+            new ShadowDrawingSettings(
+                cullingResults, light.visibleLightIndex,
+                BatchCullingProjectionType.Orthographic
+            );
         int cascadeCount = settings.directional.cascadeCount;
         int tileOffset = index * cascadeCount;
         Vector3 ratios = settings.directional.CascadeRatios;

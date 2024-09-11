@@ -36,7 +36,6 @@ Varyings LitPassVertex(Attributes input)
     output.positionWS = TransformObjectToWorld(input.positionOS);
     output.positionCS = TransformWorldToHClip(output.positionWS);
     output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-
     output.baseUV = TransformBaseUV(input.baseUV);
     return output;
 }
@@ -48,7 +47,7 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
     #if defined(_CLIPPING)
         clip(base.a - GetCutoff(input.baseUV));
     #endif
-
+    
     Surface surface;
     surface.position = input.positionWS;
     surface.normal = normalize(input.normalWS);
