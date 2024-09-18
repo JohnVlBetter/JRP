@@ -17,4 +17,5 @@ struct Surface
     float dither;
 };
 
+
 #endif

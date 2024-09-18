@@ -5,7 +5,16 @@ using UnityEngine.Rendering;
 
 partial class JRenderer
 {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    partial void DrawGizmos();
+
+    partial void DrawUnsupportedShaders();
+
+    partial void PrepareForSceneWindow();
+
+    partial void PrepareBuffer();
+
+#if UNITY_EDITOR
+
     static ShaderTagId[] legacyShaderTagIds = {
         new ShaderTagId("Always"),
         new ShaderTagId("ForwardBase"),
@@ -14,22 +23,26 @@ partial class JRenderer
         new ShaderTagId("VertexLMRGBM"),
         new ShaderTagId("VertexLM")
     };
-    static Material errorMaterial;
-    string SampleName { get; set; }
-#else
-	string SampleName => bufferName;
-#endif
 
-    partial void DrawGizmos();
-    partial void DrawUnsupportedShaders();
-    partial void PrepareForSceneWindow();
-    partial void PrepareBuffer();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    static Material errorMaterial;
+
+    string SampleName { get; set; }
+
+    partial void DrawGizmos()
+    {
+        if (Handles.ShouldRenderGizmos())
+        {
+            context.DrawGizmos(camera, GizmoSubset.PreImageEffects);
+            context.DrawGizmos(camera, GizmoSubset.PostImageEffects);
+        }
+    }
+
     partial void DrawUnsupportedShaders()
     {
         if (errorMaterial == null)
         {
-            errorMaterial = new Material(Shader.Find("Hidden/InternalErrorShader"));
+            errorMaterial =
+                new Material(Shader.Find("Hidden/InternalErrorShader"));
         }
         var drawingSettings = new DrawingSettings(
             legacyShaderTagIds[0], new SortingSettings(camera)
@@ -47,15 +60,6 @@ partial class JRenderer
         );
     }
 
-    partial void DrawGizmos()
-    {
-        if (Handles.ShouldRenderGizmos())
-        {
-            context.DrawGizmos(camera, GizmoSubset.PreImageEffects);
-            context.DrawGizmos(camera, GizmoSubset.PostImageEffects);
-        }
-    }
-
     partial void PrepareForSceneWindow()
     {
         if (camera.cameraType == CameraType.SceneView)
@@ -70,5 +74,10 @@ partial class JRenderer
         buffer.name = SampleName = camera.name;
         Profiler.EndSample();
     }
+
+#else
+
+	const string SampleName = bufferName;
+
 #endif
 }

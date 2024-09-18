@@ -40,10 +40,14 @@ public partial class JRenderer
 
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
-        lighting.Setup(context, cullingResults, shadowSettings, useLightsPerObject);
+        lighting.Setup(
+            context, cullingResults, shadowSettings, useLightsPerObject
+        );
         buffer.EndSample(SampleName);
         Setup();
-        DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
+        DrawVisibleGeometry(
+            useDynamicBatching, useGPUInstancing, useLightsPerObject
+        );
         DrawUnsupportedShaders();
         DrawGizmos();
         lighting.Cleanup();
@@ -88,7 +92,9 @@ public partial class JRenderer
         buffer.Clear();
     }
 
-    void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject)
+    void DrawVisibleGeometry(
+        bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject
+    )
     {
         PerObjectData lightsPerObjectFlags = useLightsPerObject ?
             PerObjectData.LightData | PerObjectData.LightIndices :
@@ -103,7 +109,8 @@ public partial class JRenderer
         {
             enableDynamicBatching = useDynamicBatching,
             enableInstancing = useGPUInstancing,
-            perObjectData = PerObjectData.ReflectionProbes |
+            perObjectData =
+                PerObjectData.ReflectionProbes |
                 PerObjectData.Lightmaps | PerObjectData.ShadowMask |
                 PerObjectData.LightProbe | PerObjectData.OcclusionProbe |
                 PerObjectData.LightProbeProxyVolume |
