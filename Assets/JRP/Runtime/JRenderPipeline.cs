@@ -10,11 +10,15 @@ public partial class JRenderPipeline : RenderPipeline
 
     ShadowSettings shadowSettings;
 
+    PostFXSettings postFXSettings;
+
     public JRenderPipeline(
         bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher,
-        bool useLightsPerObject, ShadowSettings shadowSettings
+        bool useLightsPerObject, ShadowSettings shadowSettings,
+        PostFXSettings postFXSettings
     )
     {
+        this.postFXSettings = postFXSettings;
         this.shadowSettings = shadowSettings;
         this.useDynamicBatching = useDynamicBatching;
         this.useGPUInstancing = useGPUInstancing;
@@ -38,7 +42,7 @@ public partial class JRenderPipeline : RenderPipeline
             renderer.Render(
                 context, cameras[i],
                 useDynamicBatching, useGPUInstancing, useLightsPerObject,
-                shadowSettings
+                shadowSettings, postFXSettings
             );
         }
     }
