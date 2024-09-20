@@ -6,8 +6,14 @@ using UnityEngine.Rendering;
 public class JRPAsset : RenderPipelineAsset
 {
     [SerializeField]
-    bool useDynamicBatching = false, useGPUInstancing = true,
-        useSRPBatcher = true, useLightsPerObject = true;
+    bool allowHDR = true;
+
+    [SerializeField]
+    bool
+        useDynamicBatching = true,
+        useGPUInstancing = true,
+        useSRPBatcher = true,
+        useLightsPerObject = true;
 
     [SerializeField]
     ShadowSettings shadows = default;
@@ -17,7 +23,9 @@ public class JRPAsset : RenderPipelineAsset
 
     protected override RenderPipeline CreatePipeline()
     {
-        return new JRenderPipeline(useDynamicBatching, useGPUInstancing,
-            useSRPBatcher, useLightsPerObject, shadows, postFXSettings);
+        return new JRenderPipeline(
+            allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher,
+            useLightsPerObject, shadows, postFXSettings
+        );
     }
 }

@@ -6,6 +6,8 @@ public partial class JRenderPipeline : RenderPipeline
 {
     JRenderer renderer = new JRenderer();
 
+    bool allowHDR;
+
     bool useDynamicBatching, useGPUInstancing, useLightsPerObject;
 
     ShadowSettings shadowSettings;
@@ -13,11 +15,13 @@ public partial class JRenderPipeline : RenderPipeline
     PostFXSettings postFXSettings;
 
     public JRenderPipeline(
+        bool allowHDR,
         bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher,
         bool useLightsPerObject, ShadowSettings shadowSettings,
         PostFXSettings postFXSettings
     )
     {
+        this.allowHDR = allowHDR;
         this.postFXSettings = postFXSettings;
         this.shadowSettings = shadowSettings;
         this.useDynamicBatching = useDynamicBatching;
@@ -40,7 +44,7 @@ public partial class JRenderPipeline : RenderPipeline
         for (int i = 0; i < cameras.Count; i++)
         {
             renderer.Render(
-                context, cameras[i],
+                context, cameras[i], allowHDR,
                 useDynamicBatching, useGPUInstancing, useLightsPerObject,
                 shadowSettings, postFXSettings
             );

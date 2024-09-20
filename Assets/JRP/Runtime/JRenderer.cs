@@ -9,6 +9,8 @@ public partial class JRenderer
         unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
         litShaderTagId = new ShaderTagId("JLit");
 
+    static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
+
     CommandBuffer buffer = new CommandBuffer
     {
         name = bufferName
@@ -24,10 +26,10 @@ public partial class JRenderer
 
     PostFXStack postFXStack = new PostFXStack();
 
-    static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
+    bool useHDR;
 
     public void Render(
-        ScriptableRenderContext context, Camera camera,
+        ScriptableRenderContext context, Camera camera, bool allowHDR,
         bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject,
         ShadowSettings shadowSettings, PostFXSettings postFXSettings
     )
@@ -41,13 +43,14 @@ public partial class JRenderer
         {
             return;
         }
+        useHDR = allowHDR && camera.allowHDR;
 
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
         lighting.Setup(
             context, cullingResults, shadowSettings, useLightsPerObject
         );
-        postFXStack.Setup(context, camera, postFXSettings);
+        postFXStack.Setup(context, camera, postFXSettings, useHDR);
         buffer.EndSample(SampleName);
         Setup();
         DrawVisibleGeometry(
@@ -88,7 +91,8 @@ public partial class JRenderer
             }
             buffer.GetTemporaryRT(
                 frameBufferId, camera.pixelWidth, camera.pixelHeight,
-                32, FilterMode.Bilinear, RenderTextureFormat.Default
+                32, FilterMode.Bilinear, useHDR ?
+                    RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default
             );
             buffer.SetRenderTarget(
                 frameBufferId,
@@ -104,6 +108,15 @@ public partial class JRenderer
         );
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
+    }
+
+    void Cleanup()
+    {
+        lighting.Cleanup();
+        if (postFXStack.IsActive)
+        {
+            buffer.ReleaseTemporaryRT(frameBufferId);
+        }
     }
 
     void Submit()
@@ -161,14 +174,5 @@ public partial class JRenderer
         context.DrawRenderers(
             cullingResults, ref drawingSettings, ref filteringSettings
         );
-    }
-
-    void Cleanup()
-    {
-        lighting.Cleanup();
-        if (postFXStack.IsActive)
-        {
-            buffer.ReleaseTemporaryRT(frameBufferId);
-        }
     }
 }
