@@ -11,6 +11,8 @@ public partial class JRenderer
 
     static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
 
+    static CameraSettings defaultCameraSettings = new CameraSettings();
+
     CommandBuffer buffer = new CommandBuffer
     {
         name = bufferName
@@ -31,11 +33,21 @@ public partial class JRenderer
     public void Render(
         ScriptableRenderContext context, Camera camera, bool allowHDR,
         bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject,
-        ShadowSettings shadowSettings, PostFXSettings postFXSettings
+        ShadowSettings shadowSettings, PostFXSettings postFXSettings,
+        int colorLUTResolution
     )
     {
         this.context = context;
         this.camera = camera;
+
+        var crpCamera = camera.GetComponent<JRenderPipelineCamera>();
+        CameraSettings cameraSettings =
+            crpCamera ? crpCamera.Settings : defaultCameraSettings;
+
+        if (cameraSettings.overridePostFX)
+        {
+            postFXSettings = cameraSettings.postFXSettings;
+        }
 
         PrepareBuffer();
         PrepareForSceneWindow();
@@ -48,13 +60,18 @@ public partial class JRenderer
         buffer.BeginSample(SampleName);
         ExecuteBuffer();
         lighting.Setup(
-            context, cullingResults, shadowSettings, useLightsPerObject
+            context, cullingResults, shadowSettings, useLightsPerObject,
+            cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1
         );
-        postFXStack.Setup(context, camera, postFXSettings, useHDR);
+        postFXStack.Setup(
+            context, camera, postFXSettings, useHDR, colorLUTResolution,
+            cameraSettings.finalBlendMode
+        );
         buffer.EndSample(SampleName);
         Setup();
         DrawVisibleGeometry(
-            useDynamicBatching, useGPUInstancing, useLightsPerObject
+            useDynamicBatching, useGPUInstancing, useLightsPerObject,
+            cameraSettings.renderingLayerMask
         );
         DrawUnsupportedShaders();
         DrawGizmosBeforeFX();
@@ -133,7 +150,8 @@ public partial class JRenderer
     }
 
     void DrawVisibleGeometry(
-        bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject
+        bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject,
+        int renderingLayerMask
     )
     {
         PerObjectData lightsPerObjectFlags = useLightsPerObject ?
@@ -159,7 +177,9 @@ public partial class JRenderer
         };
         drawingSettings.SetShaderPassName(1, litShaderTagId);
 
-        var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+        var filteringSettings = new FilteringSettings(
+            RenderQueueRange.opaque, renderingLayerMask: (uint)renderingLayerMask
+        );
 
         context.DrawRenderers(
             cullingResults, ref drawingSettings, ref filteringSettings

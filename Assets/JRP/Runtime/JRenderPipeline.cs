@@ -4,6 +4,7 @@ using UnityEngine.Rendering;
 
 public partial class JRenderPipeline : RenderPipeline
 {
+
     JRenderer renderer = new JRenderer();
 
     bool allowHDR;
@@ -14,13 +15,16 @@ public partial class JRenderPipeline : RenderPipeline
 
     PostFXSettings postFXSettings;
 
+    int colorLUTResolution;
+
     public JRenderPipeline(
         bool allowHDR,
         bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher,
         bool useLightsPerObject, ShadowSettings shadowSettings,
-        PostFXSettings postFXSettings
+        PostFXSettings postFXSettings, int colorLUTResolution
     )
     {
+        this.colorLUTResolution = colorLUTResolution;
         this.allowHDR = allowHDR;
         this.postFXSettings = postFXSettings;
         this.shadowSettings = shadowSettings;
@@ -32,10 +36,7 @@ public partial class JRenderPipeline : RenderPipeline
         InitializeForEditor();
     }
 
-    protected override void Render(
-        ScriptableRenderContext context, Camera[] cameras
-    )
-    { }
+    protected override void Render(ScriptableRenderContext context, Camera[] cameras) { }
 
     protected override void Render(
         ScriptableRenderContext context, List<Camera> cameras
@@ -46,7 +47,7 @@ public partial class JRenderPipeline : RenderPipeline
             renderer.Render(
                 context, cameras[i], allowHDR,
                 useDynamicBatching, useGPUInstancing, useLightsPerObject,
-                shadowSettings, postFXSettings
+                shadowSettings, postFXSettings, colorLUTResolution
             );
         }
     }

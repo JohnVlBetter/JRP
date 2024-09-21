@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 [CreateAssetMenu(menuName = "Rendering/JRP")]
-public class JRPAsset : RenderPipelineAsset
+public partial class JRPAsset : RenderPipelineAsset
 {
+
     [SerializeField]
     bool allowHDR = true;
 
@@ -21,11 +22,16 @@ public class JRPAsset : RenderPipelineAsset
     [SerializeField]
     PostFXSettings postFXSettings = default;
 
+    public enum ColorLUTResolution { _16 = 16, _32 = 32, _64 = 64 }
+
+    [SerializeField]
+    ColorLUTResolution colorLUTResolution = ColorLUTResolution._32;
+
     protected override RenderPipeline CreatePipeline()
     {
         return new JRenderPipeline(
             allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher,
-            useLightsPerObject, shadows, postFXSettings
+            useLightsPerObject, shadows, postFXSettings, (int)colorLUTResolution
         );
     }
 }
