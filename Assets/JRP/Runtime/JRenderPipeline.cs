@@ -4,10 +4,9 @@ using UnityEngine.Rendering;
 
 public partial class JRenderPipeline : RenderPipeline
 {
+    JRenderer renderer;
 
-    JRenderer renderer = new JRenderer();
-
-    bool allowHDR;
+    CameraBufferSettings cameraBufferSettings;
 
     bool useDynamicBatching, useGPUInstancing, useLightsPerObject;
 
@@ -18,14 +17,14 @@ public partial class JRenderPipeline : RenderPipeline
     int colorLUTResolution;
 
     public JRenderPipeline(
-        bool allowHDR,
+        CameraBufferSettings cameraBufferSettings,
         bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher,
         bool useLightsPerObject, ShadowSettings shadowSettings,
-        PostFXSettings postFXSettings, int colorLUTResolution
+        PostFXSettings postFXSettings, int colorLUTResolution, Shader cameraRendererShader
     )
     {
         this.colorLUTResolution = colorLUTResolution;
-        this.allowHDR = allowHDR;
+        this.cameraBufferSettings = cameraBufferSettings;
         this.postFXSettings = postFXSettings;
         this.shadowSettings = shadowSettings;
         this.useDynamicBatching = useDynamicBatching;
@@ -34,6 +33,7 @@ public partial class JRenderPipeline : RenderPipeline
         GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
         GraphicsSettings.lightsUseLinearIntensity = true;
         InitializeForEditor();
+        renderer = new JRenderer(cameraRendererShader);
     }
 
     protected override void Render(ScriptableRenderContext context, Camera[] cameras) { }
@@ -45,10 +45,17 @@ public partial class JRenderPipeline : RenderPipeline
         for (int i = 0; i < cameras.Count; i++)
         {
             renderer.Render(
-                context, cameras[i], allowHDR,
+                context, cameras[i], cameraBufferSettings,
                 useDynamicBatching, useGPUInstancing, useLightsPerObject,
                 shadowSettings, postFXSettings, colorLUTResolution
             );
         }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        DisposeForEditor();
+        renderer.Dispose();
     }
 }

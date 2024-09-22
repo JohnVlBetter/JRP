@@ -5,9 +5,18 @@ using UnityEngine.Rendering;
 [CreateAssetMenu(menuName = "Rendering/JRP")]
 public partial class JRPAsset : RenderPipelineAsset
 {
-
     [SerializeField]
-    bool allowHDR = true;
+    CameraBufferSettings cameraBuffer = new CameraBufferSettings
+    {
+        allowHDR = true,
+        renderScale = 1f,
+        fxaa = new CameraBufferSettings.FXAA
+        {
+            fixedThreshold = 0.0833f,
+            relativeThreshold = 0.166f,
+            subpixelBlending = 0.75f
+        }
+    };
 
     [SerializeField]
     bool
@@ -27,11 +36,15 @@ public partial class JRPAsset : RenderPipelineAsset
     [SerializeField]
     ColorLUTResolution colorLUTResolution = ColorLUTResolution._32;
 
+    [SerializeField]
+    Shader cameraRendererShader = default;
+
     protected override RenderPipeline CreatePipeline()
     {
         return new JRenderPipeline(
-            allowHDR, useDynamicBatching, useGPUInstancing, useSRPBatcher,
-            useLightsPerObject, shadows, postFXSettings, (int)colorLUTResolution
+            cameraBuffer, useDynamicBatching, useGPUInstancing, useSRPBatcher,
+            useLightsPerObject, shadows, postFXSettings, (int)colorLUTResolution,
+            cameraRendererShader
         );
     }
 }

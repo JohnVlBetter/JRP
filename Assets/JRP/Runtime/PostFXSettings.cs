@@ -1,16 +1,18 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Rendering/Post FX Settings")]
+[CreateAssetMenu(menuName = "Rendering/Custom Post FX Settings")]
 public class PostFXSettings : ScriptableObject
 {
 
     [SerializeField]
     Shader shader = default;
 
-    [System.Serializable]
+    [Serializable]
     public struct BloomSettings
     {
+
+        public bool ignoreRenderScale;
 
         [Range(0f, 16f)]
         public int maxIterations;

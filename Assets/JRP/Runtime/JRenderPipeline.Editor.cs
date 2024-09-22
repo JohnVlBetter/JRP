@@ -7,6 +7,8 @@ public partial class JRenderPipeline
 {
 	partial void InitializeForEditor();
 
+	partial void DisposeForEditor();
+
 #if UNITY_EDITOR
 
 	partial void InitializeForEditor()
@@ -14,9 +16,8 @@ public partial class JRenderPipeline
 		Lightmapping.SetDelegate(lightsDelegate);
 	}
 
-	protected override void Dispose(bool disposing)
+	partial void DisposeForEditor()
 	{
-		base.Dispose(disposing);
 		Lightmapping.ResetDelegate();
 	}
 
