@@ -8,8 +8,6 @@ partial class JRenderer
 
     partial void PrepareForSceneWindow();
 
-    partial void PrepareBuffer();
-
 #if UNITY_EDITOR
 
     static ShaderTagId[] legacyShaderTagIds = {
@@ -22,8 +20,6 @@ partial class JRenderer
     };
 
     static Material errorMaterial;
-
-    string SampleName { get; set; }
 
     public void DrawUnsupportedShaders()
     {
@@ -56,17 +52,6 @@ partial class JRenderer
             useScaledRendering = false;
         }
     }
-
-    partial void PrepareBuffer()
-    {
-        Profiler.BeginSample("Editor Only");
-        buffer.name = SampleName = camera.name;
-        Profiler.EndSample();
-    }
-
-#else
-
-	const string SampleName = bufferName;
 
 #endif
 }

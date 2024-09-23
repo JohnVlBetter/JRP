@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 public class GizmosPass
 {
 #if UNITY_EDITOR
+    static readonly ProfilingSampler sampler = new("Gizmos");
     JRenderer renderer;
 
     void Render(RenderGraphContext context)
@@ -28,7 +29,7 @@ public class GizmosPass
 #if UNITY_EDITOR
         if (Handles.ShouldRenderGizmos())
         {
-            using RenderGraphBuilder builder = renderGraph.AddRenderPass("Gizmos", out GizmosPass pass);
+            using RenderGraphBuilder builder = renderGraph.AddRenderPass(sampler.name, out GizmosPass pass, sampler);
             pass.renderer = renderer;
             builder.SetRenderFunc<GizmosPass>((pass, context) => pass.Render(context));
         }

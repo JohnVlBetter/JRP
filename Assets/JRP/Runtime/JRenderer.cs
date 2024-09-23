@@ -6,8 +6,6 @@ public partial class JRenderer
 {
     public const float renderScaleMin = 0.1f, renderScaleMax = 2f;
 
-    const string bufferName = "Render Camera";
-
     static ShaderTagId
         unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
         litShaderTagId = new ShaderTagId("JLit");
@@ -29,11 +27,7 @@ public partial class JRenderer
 
     static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
 
-    CommandBuffer buffer = new CommandBuffer
-    {
-        name = bufferName
-    };
-
+    CommandBuffer buffer;
     ScriptableRenderContext context;
 
     public Camera camera;
@@ -84,9 +78,18 @@ public partial class JRenderer
         this.context = context;
         this.camera = camera;
 
-        var crpCamera = camera.GetComponent<JRenderPipelineCamera>();
-        CameraSettings cameraSettings =
-            crpCamera ? crpCamera.Settings : defaultCameraSettings;
+        ProfilingSampler cameraSampler;
+        CameraSettings cameraSettings;
+        if (camera.TryGetComponent(out JRenderPipelineCamera crpCamera))
+        {
+            cameraSampler = crpCamera.Sampler;
+            cameraSettings = crpCamera.Settings;
+        }
+        else
+        {
+            cameraSampler = ProfilingSampler.Get(camera.cameraType);
+            cameraSettings = defaultCameraSettings;
+        }
 
         if (camera.cameraType == CameraType.Reflection)
         {
@@ -106,7 +109,6 @@ public partial class JRenderer
 
         float renderScale = cameraSettings.GetRenderScale(bufferSettings.renderScale);
         useScaledRendering = renderScale < 0.99f || renderScale > 1.01f;
-        PrepareBuffer();
         PrepareForSceneWindow();
         if (!Cull(shadowSettings.maxDistance))
         {
@@ -126,39 +128,34 @@ public partial class JRenderer
             bufferSize.y = camera.pixelHeight;
         }
 
-        buffer.BeginSample(SampleName);
-        buffer.SetGlobalVector(bufferSizeId, new Vector4(
-            1f / bufferSize.x, 1f / bufferSize.y,
-            bufferSize.x, bufferSize.y
-        ));
-        ExecuteBuffer();
-        lighting.Setup(
-            context, cullingResults, shadowSettings, useLightsPerObject,
-            cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1
-        );
-
         bufferSettings.fxaa.enabled &= cameraSettings.allowFXAA;
         postFXStack.Setup(
-            context, camera, bufferSize, postFXSettings, cameraSettings.keepAlpha, useHDR,
+            camera, bufferSize, postFXSettings, cameraSettings.keepAlpha, useHDR,
             colorLUTResolution, cameraSettings.finalBlendMode,
             bufferSettings.bicubicRescaling, bufferSettings.fxaa
         );
-        buffer.EndSample(SampleName);
-        Setup();
-        DrawVisibleGeometry(
-            useDynamicBatching, useGPUInstancing, useLightsPerObject,
-            cameraSettings.renderingLayerMask
-        );
 
+        useIntermediateBuffer = useScaledRendering || useColorTexture || useDepthTexture || postFXStack.IsActive;
         var renderGraphParameters = new RenderGraphParameters
         {
             commandBuffer = CommandBufferPool.Get(),
             currentFrameIndex = Time.frameCount,
-            executionName = "Render Camera",
+            executionName = cameraSampler.name,
             scriptableRenderContext = context
         };
+        buffer = renderGraphParameters.commandBuffer;
         using (renderGraph.RecordAndExecute(renderGraphParameters))
         {
+            using var _ = new RenderGraphProfilingScope(renderGraph, cameraSampler);
+            LightingPass.Record(
+                renderGraph, lighting,
+                cullingResults, shadowSettings, useLightsPerObject,
+                cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1);
+            SetupPass.Record(renderGraph, this);
+            VisibleGeometryPass.Record(
+                renderGraph, this,
+                useDynamicBatching, useGPUInstancing, useLightsPerObject,
+                cameraSettings.renderingLayerMask);
             UnsupportedShadersPass.Record(renderGraph, this);
             if (postFXStack.IsActive)
             {
@@ -187,13 +184,11 @@ public partial class JRenderer
         return false;
     }
 
-    void Setup()
+    public void Setup()
     {
         context.SetupCameraProperties(camera);
         CameraClearFlags flags = camera.clearFlags;
 
-        useIntermediateBuffer = useScaledRendering ||
-            useColorTexture || useDepthTexture || postFXStack.IsActive;
         if (useIntermediateBuffer)
         {
             if (flags > CameraClearFlags.Color)
@@ -223,9 +218,11 @@ public partial class JRenderer
             flags == CameraClearFlags.Color ?
                 camera.backgroundColor.linear : Color.clear
         );
-        buffer.BeginSample(SampleName);
         buffer.SetGlobalTexture(colorTextureId, missingTexture);
         buffer.SetGlobalTexture(depthTextureId, missingTexture);
+
+        buffer.SetGlobalVector(bufferSizeId, new Vector4(
+            1f / bufferSize.x, 1f / bufferSize.y, bufferSize.x, bufferSize.y));
         ExecuteBuffer();
     }
 
@@ -249,7 +246,6 @@ public partial class JRenderer
 
     void Submit()
     {
-        buffer.EndSample(SampleName);
         ExecuteBuffer();
         context.Submit();
     }
@@ -260,11 +256,12 @@ public partial class JRenderer
         buffer.Clear();
     }
 
-    void DrawVisibleGeometry(
+    public void DrawVisibleGeometry(
         bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject,
         int renderingLayerMask
     )
     {
+        ExecuteBuffer();
         PerObjectData lightsPerObjectFlags = useLightsPerObject ?
             PerObjectData.LightData | PerObjectData.LightIndices :
             PerObjectData.None;

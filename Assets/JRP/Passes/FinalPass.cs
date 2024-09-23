@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 
 public class FinalPass
 {
+    static readonly ProfilingSampler sampler = new("Final");
     JRenderer renderer;
 
     CameraSettings.FinalBlendMode finalBlendMode;
@@ -18,8 +19,7 @@ public class FinalPass
         JRenderer renderer,
         CameraSettings.FinalBlendMode finalBlendMode)
     {
-        using RenderGraphBuilder builder =
-            renderGraph.AddRenderPass("Final", out FinalPass pass);
+        using RenderGraphBuilder builder = renderGraph.AddRenderPass(sampler.name, out FinalPass pass, sampler);
         pass.renderer = renderer;
         pass.finalBlendMode = finalBlendMode;
         builder.SetRenderFunc<FinalPass>((pass, context) => pass.Render(context));
