@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
 public partial class JRenderer
 {
@@ -11,7 +12,7 @@ public partial class JRenderer
         unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
         litShaderTagId = new ShaderTagId("JLit");
 
-    static int
+    public static int
         bufferSizeId = Shader.PropertyToID("_CameraBufferSize"),
         colorAttachmentId = Shader.PropertyToID("_CameraColorAttachment"),
         depthAttachmentId = Shader.PropertyToID("_CameraDepthAttachment"),
@@ -35,7 +36,7 @@ public partial class JRenderer
 
     ScriptableRenderContext context;
 
-    Camera camera;
+    public Camera camera;
 
     CullingResults cullingResults;
 
@@ -45,7 +46,7 @@ public partial class JRenderer
 
     bool useHDR, useScaledRendering;
 
-    bool useColorTexture, useDepthTexture, useIntermediateBuffer;
+    public bool useColorTexture, useDepthTexture, useIntermediateBuffer;
 
     Vector2Int bufferSize;
 
@@ -72,6 +73,7 @@ public partial class JRenderer
     }
 
     public void Render(
+        RenderGraph renderGraph,
         ScriptableRenderContext context, Camera camera,
         CameraBufferSettings bufferSettings,
         bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject,
@@ -147,20 +149,31 @@ public partial class JRenderer
             useDynamicBatching, useGPUInstancing, useLightsPerObject,
             cameraSettings.renderingLayerMask
         );
-        DrawUnsupportedShaders();
-        DrawGizmosBeforeFX();
-        if (postFXStack.IsActive)
+
+        var renderGraphParameters = new RenderGraphParameters
         {
-            postFXStack.Render(colorAttachmentId);
-        }
-        else if (useIntermediateBuffer)
+            commandBuffer = CommandBufferPool.Get(),
+            currentFrameIndex = Time.frameCount,
+            executionName = "Render Camera",
+            scriptableRenderContext = context
+        };
+        using (renderGraph.RecordAndExecute(renderGraphParameters))
         {
-            DrawFinal(cameraSettings.finalBlendMode);
-            ExecuteBuffer();
+            UnsupportedShadersPass.Record(renderGraph, this);
+            if (postFXStack.IsActive)
+            {
+                PostFXPass.Record(renderGraph, postFXStack);
+            }
+            else if (useIntermediateBuffer)
+            {
+                FinalPass.Record(renderGraph, this, cameraSettings.finalBlendMode);
+            }
+            GizmosPass.Record(renderGraph, this);
         }
-        DrawGizmosAfterFX();
+
         Cleanup();
         Submit();
+        CommandBufferPool.Release(renderGraphParameters.commandBuffer);
     }
 
     bool Cull(float maxShadowDistance)
@@ -241,7 +254,7 @@ public partial class JRenderer
         context.Submit();
     }
 
-    void ExecuteBuffer()
+    public void ExecuteBuffer()
     {
         context.ExecuteCommandBuffer(buffer);
         buffer.Clear();
@@ -343,7 +356,7 @@ public partial class JRenderer
         ExecuteBuffer();
     }
 
-    void Draw(
+    public void Draw(
         RenderTargetIdentifier from, RenderTargetIdentifier to, bool isDepth = false
     )
     {
@@ -357,7 +370,7 @@ public partial class JRenderer
         );
     }
 
-    void DrawFinal(CameraSettings.FinalBlendMode finalBlendMode)
+    public void DrawFinal(CameraSettings.FinalBlendMode finalBlendMode)
     {
         buffer.SetGlobalFloat(srcBlendId, (float)finalBlendMode.source);
         buffer.SetGlobalFloat(dstBlendId, (float)finalBlendMode.destination);

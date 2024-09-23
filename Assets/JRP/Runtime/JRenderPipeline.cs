@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
 public partial class JRenderPipeline : RenderPipeline
 {
@@ -15,6 +16,7 @@ public partial class JRenderPipeline : RenderPipeline
     PostFXSettings postFXSettings;
 
     int colorLUTResolution;
+    readonly RenderGraph renderGraph = new("Custom SRP Render Graph");
 
     public JRenderPipeline(
         CameraBufferSettings cameraBufferSettings,
@@ -38,18 +40,17 @@ public partial class JRenderPipeline : RenderPipeline
 
     protected override void Render(ScriptableRenderContext context, Camera[] cameras) { }
 
-    protected override void Render(
-        ScriptableRenderContext context, List<Camera> cameras
-    )
+    protected override void Render(ScriptableRenderContext context, List<Camera> cameras)
     {
         for (int i = 0; i < cameras.Count; i++)
         {
             renderer.Render(
-                context, cameras[i], cameraBufferSettings,
+                renderGraph, context, cameras[i], cameraBufferSettings,
                 useDynamicBatching, useGPUInstancing, useLightsPerObject,
                 shadowSettings, postFXSettings, colorLUTResolution
             );
         }
+        renderGraph.EndFrame();
     }
 
     protected override void Dispose(bool disposing)
@@ -57,5 +58,6 @@ public partial class JRenderPipeline : RenderPipeline
         base.Dispose(disposing);
         DisposeForEditor();
         renderer.Dispose();
+        renderGraph.Cleanup();
     }
 }
