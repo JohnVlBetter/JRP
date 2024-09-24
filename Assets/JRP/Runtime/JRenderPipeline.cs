@@ -9,7 +9,7 @@ public partial class JRenderPipeline : RenderPipeline
 
     CameraBufferSettings cameraBufferSettings;
 
-    bool useDynamicBatching, useGPUInstancing, useLightsPerObject;
+    readonly bool useLightsPerObject;
 
     ShadowSettings shadowSettings;
 
@@ -20,7 +20,7 @@ public partial class JRenderPipeline : RenderPipeline
 
     public JRenderPipeline(
         CameraBufferSettings cameraBufferSettings,
-        bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher,
+        bool useSRPBatcher,
         bool useLightsPerObject, ShadowSettings shadowSettings,
         PostFXSettings postFXSettings, int colorLUTResolution, Shader cameraRendererShader
     )
@@ -29,8 +29,6 @@ public partial class JRenderPipeline : RenderPipeline
         this.cameraBufferSettings = cameraBufferSettings;
         this.postFXSettings = postFXSettings;
         this.shadowSettings = shadowSettings;
-        this.useDynamicBatching = useDynamicBatching;
-        this.useGPUInstancing = useGPUInstancing;
         this.useLightsPerObject = useLightsPerObject;
         GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
         GraphicsSettings.lightsUseLinearIntensity = true;
@@ -46,7 +44,7 @@ public partial class JRenderPipeline : RenderPipeline
         {
             renderer.Render(
                 renderGraph, context, cameras[i], cameraBufferSettings,
-                useDynamicBatching, useGPUInstancing, useLightsPerObject,
+                useLightsPerObject,
                 shadowSettings, postFXSettings, colorLUTResolution
             );
         }

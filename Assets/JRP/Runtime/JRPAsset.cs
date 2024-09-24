@@ -19,11 +19,7 @@ public partial class JRPAsset : RenderPipelineAsset
     };
 
     [SerializeField]
-    bool
-        useDynamicBatching = true,
-        useGPUInstancing = true,
-        useSRPBatcher = true,
-        useLightsPerObject = true;
+    bool useSRPBatcher = true, useLightsPerObject = true;
 
     [SerializeField]
     ShadowSettings shadows = default;
@@ -39,10 +35,17 @@ public partial class JRPAsset : RenderPipelineAsset
     [SerializeField]
     Shader cameraRendererShader = default;
 
+    [Header("Deprecated Settings")]
+    [SerializeField, Tooltip("Dynamic batching is no longer used.")]
+    bool useDynamicBatching;
+
+    [SerializeField, Tooltip("GPU instancing is always enabled.")]
+    bool useGPUInstancing;
+
     protected override RenderPipeline CreatePipeline()
     {
         return new JRenderPipeline(
-            cameraBuffer, useDynamicBatching, useGPUInstancing, useSRPBatcher,
+            cameraBuffer, useSRPBatcher,
             useLightsPerObject, shadows, postFXSettings, (int)colorLUTResolution,
             cameraRendererShader
         );

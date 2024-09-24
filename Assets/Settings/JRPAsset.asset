@@ -26,8 +26,6 @@ MonoBehaviour:
       relativeThreshold: 0.166
       subpixelBlending: 0.75
       quality: 0
-  useDynamicBatching: 0
-  useGPUInstancing: 1
   useSRPBatcher: 1
   useLightsPerObject: 1
   shadows:
@@ -49,3 +47,5 @@ MonoBehaviour:
   colorLUTResolution: 64
   cameraRendererShader: {fileID: 4800000, guid: 9ca337ae6b162ad4caa21e2ba66ca68e,
     type: 3}
+  useDynamicBatching: 0
+  useGPUInstancing: 1
