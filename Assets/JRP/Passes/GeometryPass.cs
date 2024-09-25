@@ -9,7 +9,7 @@ public class GeometryPass
         samplerOpaque = new("Opaque Geometry"),
         samplerTransparent = new("Transparent Geometry");
 
-    static readonly ShaderTagId[] shaderTagIds = {
+    static readonly ShaderTagId[] shaderTagIDs = {
         new("SRPDefaultUnlit"),
         new("JLit")
     };
@@ -24,8 +24,14 @@ public class GeometryPass
     }
 
     public static void Record(
-        RenderGraph renderGraph, Camera camera, CullingResults cullingResults,
-        bool useLightsPerObject, int renderingLayerMask, bool opaque)
+        RenderGraph renderGraph,
+        Camera camera,
+        CullingResults cullingResults,
+        bool useLightsPerObject,
+        int renderingLayerMask,
+        bool opaque,
+        in CameraRendererTextures textures,
+        in ShadowTextures shadowTextures)
     {
         ProfilingSampler sampler = opaque ? samplerOpaque : samplerTransparent;
 
@@ -33,10 +39,11 @@ public class GeometryPass
             sampler.name, out GeometryPass pass, sampler);
 
         pass.list = builder.UseRendererList(renderGraph.CreateRendererList(
-            new RendererListDesc(shaderTagIds, cullingResults, camera)
+            new RendererListDesc(shaderTagIDs, cullingResults, camera)
             {
                 sortingCriteria = opaque ?
-                    SortingCriteria.CommonOpaque : SortingCriteria.CommonTransparent,
+                    SortingCriteria.CommonOpaque :
+                    SortingCriteria.CommonTransparent,
                 rendererConfiguration =
                     PerObjectData.ReflectionProbes |
                     PerObjectData.Lightmaps |
@@ -53,6 +60,23 @@ public class GeometryPass
                 renderingLayerMask = (uint)renderingLayerMask
             }));
 
-        builder.SetRenderFunc<GeometryPass>((pass, context) => pass.Render(context));
+        builder.ReadWriteTexture(textures.colorAttachment);
+        builder.ReadWriteTexture(textures.depthAttachment);
+        if (!opaque)
+        {
+            if (textures.colorCopy.IsValid())
+            {
+                builder.ReadTexture(textures.colorCopy);
+            }
+            if (textures.depthCopy.IsValid())
+            {
+                builder.ReadTexture(textures.depthCopy);
+            }
+        }
+        builder.ReadTexture(shadowTextures.directionalAtlas);
+        builder.ReadTexture(shadowTextures.otherAtlas);
+
+        builder.SetRenderFunc<GeometryPass>(
+            static (pass, context) => pass.Render(context));
     }
 }

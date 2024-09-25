@@ -5,25 +5,26 @@ using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
 public partial class JRenderPipeline : RenderPipeline
 {
-    JRenderer renderer;
+    readonly JRenderer renderer;
 
-    CameraBufferSettings cameraBufferSettings;
+    readonly CameraBufferSettings cameraBufferSettings;
 
     readonly bool useLightsPerObject;
 
-    ShadowSettings shadowSettings;
+    readonly ShadowSettings shadowSettings;
 
-    PostFXSettings postFXSettings;
+    readonly PostFXSettings postFXSettings;
 
-    int colorLUTResolution;
+    readonly int colorLUTResolution;
+
     readonly RenderGraph renderGraph = new("Custom SRP Render Graph");
 
     public JRenderPipeline(
         CameraBufferSettings cameraBufferSettings,
         bool useSRPBatcher,
         bool useLightsPerObject, ShadowSettings shadowSettings,
-        PostFXSettings postFXSettings, int colorLUTResolution, Shader cameraRendererShader
-    )
+        PostFXSettings postFXSettings, int colorLUTResolution,
+        Shader cameraRendererShader)
     {
         this.colorLUTResolution = colorLUTResolution;
         this.cameraBufferSettings = cameraBufferSettings;
@@ -33,20 +34,22 @@ public partial class JRenderPipeline : RenderPipeline
         GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
         GraphicsSettings.lightsUseLinearIntensity = true;
         InitializeForEditor();
-        renderer = new JRenderer(cameraRendererShader);
+        renderer = new(cameraRendererShader);
     }
 
-    protected override void Render(ScriptableRenderContext context, Camera[] cameras) { }
+    protected override void Render(
+        ScriptableRenderContext context, Camera[] cameras)
+    { }
 
-    protected override void Render(ScriptableRenderContext context, List<Camera> cameras)
+    protected override void Render(
+        ScriptableRenderContext context, List<Camera> cameras)
     {
         for (int i = 0; i < cameras.Count; i++)
         {
             renderer.Render(
                 renderGraph, context, cameras[i], cameraBufferSettings,
                 useLightsPerObject,
-                shadowSettings, postFXSettings, colorLUTResolution
-            );
+                shadowSettings, postFXSettings, colorLUTResolution);
         }
         renderGraph.EndFrame();
     }

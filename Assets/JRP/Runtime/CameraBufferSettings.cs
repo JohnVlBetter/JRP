@@ -2,8 +2,8 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public struct CameraBufferSettings {
-
+public struct CameraBufferSettings
+{
 	public bool allowHDR;
 
 	public bool copyColor, copyColorReflection, copyDepth, copyDepthReflection;
@@ -11,13 +11,14 @@ public struct CameraBufferSettings {
 	[Range(JRenderer.renderScaleMin, JRenderer.renderScaleMax)]
 	public float renderScale;
 
-	public enum BicubicRescalingMode { Off, UpOnly, UpAndDown }
+	public enum BicubicRescalingMode
+	{ Off, UpOnly, UpAndDown }
 
 	public BicubicRescalingMode bicubicRescaling;
 
 	[Serializable]
-	public struct FXAA {
-
+	public struct FXAA
+	{
 		public bool enabled;
 
 		[Range(0.0312f, 0.0833f)]
@@ -29,7 +30,8 @@ public struct CameraBufferSettings {
 		[Range(0f, 1f)]
 		public float subpixelBlending;
 
-		public enum Quality { Low, Medium, High }
+		public enum Quality
+		{ Low, Medium, High }
 
 		public Quality quality;
 	}

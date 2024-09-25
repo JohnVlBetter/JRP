@@ -7,31 +7,50 @@ public class GizmosPass
 {
 #if UNITY_EDITOR
     static readonly ProfilingSampler sampler = new("Gizmos");
-    JRenderer renderer;
+
+    bool requiresDepthCopy;
+
+    CameraRendererCopier copier;
+
+    TextureHandle depthAttachment;
 
     void Render(RenderGraphContext context)
     {
-        if (renderer.useIntermediateBuffer)
+        CommandBuffer buffer = context.cmd;
+        ScriptableRenderContext renderContext = context.renderContext;
+        if (requiresDepthCopy)
         {
-            renderer.Draw(
-                JRenderer.depthAttachmentId, BuiltinRenderTextureType.CameraTarget,
-                true);
-            renderer.ExecuteBuffer();
+            copier.CopyByDrawing(buffer, depthAttachment,
+                BuiltinRenderTextureType.CameraTarget, true);
+            renderContext.ExecuteCommandBuffer(buffer);
+            buffer.Clear();
         }
-        context.renderContext.DrawGizmos(renderer.camera, GizmoSubset.PreImageEffects);
-        context.renderContext.DrawGizmos(renderer.camera, GizmoSubset.PostImageEffects);
+        renderContext.DrawGizmos(copier.Camera, GizmoSubset.PreImageEffects);
+        renderContext.DrawGizmos(copier.Camera, GizmoSubset.PostImageEffects);
     }
 #endif
 
     [Conditional("UNITY_EDITOR")]
-    public static void Record(RenderGraph renderGraph, JRenderer renderer)
+    public static void Record(
+        RenderGraph renderGraph,
+        bool useIntermediateBuffer,
+        CameraRendererCopier copier,
+        in CameraRendererTextures textures)
     {
 #if UNITY_EDITOR
         if (Handles.ShouldRenderGizmos())
         {
-            using RenderGraphBuilder builder = renderGraph.AddRenderPass(sampler.name, out GizmosPass pass, sampler);
-            pass.renderer = renderer;
-            builder.SetRenderFunc<GizmosPass>((pass, context) => pass.Render(context));
+            using RenderGraphBuilder builder = renderGraph.AddRenderPass(
+                sampler.name, out GizmosPass pass, sampler);
+            pass.requiresDepthCopy = useIntermediateBuffer;
+            pass.copier = copier;
+            if (useIntermediateBuffer)
+            {
+                pass.depthAttachment = builder.ReadTexture(
+                    textures.depthAttachment);
+            }
+            builder.SetRenderFunc<GizmosPass>(
+                static (pass, context) => pass.Render(context));
         }
 #endif
     }

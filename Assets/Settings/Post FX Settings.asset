@@ -34,7 +34,7 @@ MonoBehaviour:
     temperature: -4.1
     tint: -5.3
   splitToning:
-    shadows: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    shadows: {r: 0.6132076, g: 0.6103151, b: 0.6103151, a: 1}
     highlights: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     balance: 0
   channelMixer:
@@ -45,7 +45,7 @@ MonoBehaviour:
     shadows: {r: 0.70440245, g: 0.70440245, b: 0.70440245, a: 1}
     midtones: {r: 1, g: 1, b: 1, a: 1}
     highlights: {r: 1, g: 1, b: 1, a: 1}
-    shadowsStart: 0
+    shadowsStart: 0.114
     shadowsEnd: 0.3
     highlightsStart: 0.55
     highLightsEnd: 1

@@ -1,17 +1,16 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Rendering/Custom Post FX Settings")]
 public class PostFXSettings : ScriptableObject
 {
-
     [SerializeField]
     Shader shader = default;
 
     [Serializable]
     public struct BloomSettings
     {
-
         public bool ignoreRenderScale;
 
         [Range(0f, 16f)]
@@ -33,7 +32,8 @@ public class PostFXSettings : ScriptableObject
 
         public bool fadeFireflies;
 
-        public enum Mode { Additive, Scattering }
+        public enum Mode
+        { Additive, Scattering }
 
         public Mode mode;
 
@@ -42,7 +42,7 @@ public class PostFXSettings : ScriptableObject
     }
 
     [SerializeField]
-    BloomSettings bloom = new BloomSettings
+    BloomSettings bloom = new()
     {
         scatter = 0.7f
     };
@@ -52,7 +52,6 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct ColorAdjustmentsSettings
     {
-
         public float postExposure;
 
         [Range(-100f, 100f)]
@@ -69,7 +68,7 @@ public class PostFXSettings : ScriptableObject
     }
 
     [SerializeField]
-    ColorAdjustmentsSettings colorAdjustments = new ColorAdjustmentsSettings
+    ColorAdjustmentsSettings colorAdjustments = new()
     {
         colorFilter = Color.white
     };
@@ -79,7 +78,6 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct WhiteBalanceSettings
     {
-
         [Range(-100f, 100f)]
         public float temperature, tint;
     }
@@ -92,7 +90,6 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct SplitToningSettings
     {
-
         [ColorUsage(false)]
         public Color shadows, highlights;
 
@@ -101,7 +98,7 @@ public class PostFXSettings : ScriptableObject
     }
 
     [SerializeField]
-    SplitToningSettings splitToning = new SplitToningSettings
+    SplitToningSettings splitToning = new()
     {
         shadows = Color.gray,
         highlights = Color.gray
@@ -112,12 +109,11 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct ChannelMixerSettings
     {
-
         public Vector3 red, green, blue;
     }
 
     [SerializeField]
-    ChannelMixerSettings channelMixer = new ChannelMixerSettings
+    ChannelMixerSettings channelMixer = new()
     {
         red = Vector3.right,
         green = Vector3.up,
@@ -129,7 +125,6 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct ShadowsMidtonesHighlightsSettings
     {
-
         [ColorUsage(false, true)]
         public Color shadows, midtones, highlights;
 
@@ -138,16 +133,15 @@ public class PostFXSettings : ScriptableObject
     }
 
     [SerializeField]
-    ShadowsMidtonesHighlightsSettings
-        shadowsMidtonesHighlights = new ShadowsMidtonesHighlightsSettings
-        {
-            shadows = Color.white,
-            midtones = Color.white,
-            highlights = Color.white,
-            shadowsEnd = 0.3f,
-            highlightsStart = 0.55f,
-            highLightsEnd = 1f
-        };
+    ShadowsMidtonesHighlightsSettings shadowsMidtonesHighlights = new()
+    {
+        shadows = Color.white,
+        midtones = Color.white,
+        highlights = Color.white,
+        shadowsEnd = 0.3f,
+        highlightsStart = 0.55f,
+        highLightsEnd = 1f
+    };
 
     public ShadowsMidtonesHighlightsSettings ShadowsMidtonesHighlights =>
         shadowsMidtonesHighlights;
@@ -155,8 +149,8 @@ public class PostFXSettings : ScriptableObject
     [Serializable]
     public struct ToneMappingSettings
     {
-
-        public enum Mode { None, ACES, Neutral, Reinhard }
+        public enum Mode
+        { None, ACES, Neutral, Reinhard }
 
         public Mode mode;
     }
@@ -175,10 +169,24 @@ public class PostFXSettings : ScriptableObject
         {
             if (material == null && shader != null)
             {
-                material = new Material(shader);
-                material.hideFlags = HideFlags.HideAndDontSave;
+                material = new(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
             }
             return material;
         }
+    }
+
+    public static bool AreApplicableTo(Camera camera)
+    {
+#if UNITY_EDITOR
+        if (camera.cameraType == CameraType.SceneView &&
+            !SceneView.currentDrawingSceneView.sceneViewState.showImageEffects)
+        {
+            return false;
+        }
+#endif
+        return camera.cameraType <= CameraType.SceneView;
     }
 }

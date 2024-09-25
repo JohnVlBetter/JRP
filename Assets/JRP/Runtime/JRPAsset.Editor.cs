@@ -1,6 +1,5 @@
 partial class JRPAsset
 {
-
 #if UNITY_EDITOR
 
     static string[] renderingLayerNames;
