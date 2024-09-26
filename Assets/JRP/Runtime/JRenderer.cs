@@ -113,7 +113,7 @@ public partial class JRenderer
             using var _ = new RenderGraphProfilingScope(
                 renderGraph, cameraSampler);
 
-            ShadowTextures shadowTextures = LightingPass.Record(
+            LightResources lightResources = LightingPass.Record(
                 renderGraph, cullingResults, shadowSettings, useLightsPerObject,
                 cameraSettings.maskLights ? cameraSettings.renderingLayerMask :
                 -1);
@@ -125,7 +125,7 @@ public partial class JRenderer
             GeometryPass.Record(
                 renderGraph, camera, cullingResults,
                 useLightsPerObject, cameraSettings.renderingLayerMask, true,
-                textures, shadowTextures);
+                textures, lightResources);
 
             SkyboxPass.Record(renderGraph, camera, textures);
 
@@ -138,7 +138,7 @@ public partial class JRenderer
             GeometryPass.Record(
                 renderGraph, camera, cullingResults,
                 useLightsPerObject, cameraSettings.renderingLayerMask, false,
-                textures, shadowTextures);
+                textures, lightResources);
 
             UnsupportedShadersPass.Record(renderGraph, camera, cullingResults);
 

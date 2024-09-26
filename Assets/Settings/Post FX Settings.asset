@@ -19,22 +19,22 @@ MonoBehaviour:
     downscaleLimit: 141
     bicubicUpsampling: 1
     threshold: 0.97
-    thresholdKnee: 0.281
+    thresholdKnee: 0.342
     intensity: 0.85
-    fadeFireflies: 0
+    fadeFireflies: 1
     mode: 1
     scatter: 0.559
   colorAdjustments:
     postExposure: 0
-    contrast: 0
+    contrast: -7.9
     colorFilter: {r: 1, g: 1, b: 1, a: 1}
-    hueShift: 0
-    saturation: 0
+    hueShift: -27
+    saturation: -21.1
   whiteBalance:
     temperature: -4.1
     tint: -5.3
   splitToning:
-    shadows: {r: 0.6132076, g: 0.6103151, b: 0.6103151, a: 1}
+    shadows: {r: 0.7075472, g: 0.7075472, b: 0.7075472, a: 1}
     highlights: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     balance: 0
   channelMixer:
