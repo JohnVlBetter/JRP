@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering.RenderGraphModule;
+using UnityEngine.Rendering;
 
-public partial class JRenderer
+public class JRenderer
 {
     public const float renderScaleMin = 0.1f, renderScaleMax = 2f;
 
@@ -12,19 +12,29 @@ public partial class JRenderer
 
     readonly Material material;
 
-    public JRenderer(Shader shader) =>
+    public JRenderer(Shader shader, Shader cameraDebuggerShader)
+    {
         material = CoreUtils.CreateEngineMaterial(shader);
+        CameraDebugger.Initialize(cameraDebuggerShader);
+    }
 
-    public void Dispose() => CoreUtils.Destroy(material);
+    public void Dispose()
+    {
+        CoreUtils.Destroy(material);
+        CameraDebugger.Cleanup();
+    }
 
     public void Render(
         RenderGraph renderGraph,
-        ScriptableRenderContext context, Camera camera,
-        CameraBufferSettings bufferSettings,
-        bool useLightsPerObject,
-        ShadowSettings shadowSettings, PostFXSettings postFXSettings,
-        int colorLUTResolution)
+        ScriptableRenderContext context,
+        Camera camera,
+        JRenderPipelineSettings settings)
     {
+        CameraBufferSettings bufferSettings = settings.cameraBuffer;
+        PostFXSettings postFXSettings = settings.postFXSettings;
+        ShadowSettings shadowSettings = settings.shadows;
+        bool useLightsPerObject = settings.useLightsPerObject;
+
         ProfilingSampler cameraSampler;
         CameraSettings cameraSettings;
         if (camera.TryGetComponent(out JRenderPipelineCamera crpCamera))
@@ -98,7 +108,8 @@ public partial class JRenderer
 
         bufferSettings.fxaa.enabled &= cameraSettings.allowFXAA;
         bool useIntermediateBuffer = useScaledRendering ||
-            useColorTexture || useDepthTexture || hasActivePostFX;
+            useColorTexture || useDepthTexture || hasActivePostFX ||
+            !useLightsPerObject;
 
         var renderGraphParameters = new RenderGraphParameters
         {
@@ -114,7 +125,8 @@ public partial class JRenderer
                 renderGraph, cameraSampler);
 
             LightResources lightResources = LightingPass.Record(
-                renderGraph, cullingResults, shadowSettings, useLightsPerObject,
+                renderGraph, cullingResults, bufferSize,
+                settings.forwardPlus, shadowSettings, useLightsPerObject,
                 cameraSettings.maskLights ? cameraSettings.renderingLayerMask :
                 -1);
 
@@ -150,13 +162,14 @@ public partial class JRenderer
                 postFXStack.FinalBlendMode = cameraSettings.finalBlendMode;
                 postFXStack.Settings = postFXSettings;
                 PostFXPass.Record(
-                    renderGraph, postFXStack, colorLUTResolution,
+                    renderGraph, postFXStack, (int)settings.colorLUTResolution,
                     cameraSettings.keepAlpha, textures);
             }
             else if (useIntermediateBuffer)
             {
                 FinalPass.Record(renderGraph, copier, textures);
             }
+            DebugPass.Record(renderGraph, settings, camera, lightResources);
             GizmosPass.Record(renderGraph, useIntermediateBuffer,
                 copier, textures);
         }

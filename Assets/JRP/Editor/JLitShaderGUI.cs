@@ -2,10 +2,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class JLitShaderGUI : ShaderGUI
+public class JShaderGUI : ShaderGUI
 {
     MaterialEditor editor;
+
     Object[] materials;
+
     MaterialProperty[] properties;
 
     bool showPresets;
@@ -66,8 +68,7 @@ public class JLitShaderGUI : ShaderGUI
     }
 
     public override void OnGUI(
-        MaterialEditor materialEditor, MaterialProperty[] properties
-    )
+        MaterialEditor materialEditor, MaterialProperty[] properties)
     {
         EditorGUI.BeginChangeCheck();
         base.OnGUI(materialEditor, properties);
