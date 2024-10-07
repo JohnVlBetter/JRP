@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class JObject : MonoBehaviour
 {
+    public uint jMeshID;
+
     private JMaterial material;
     private JMesh mesh;
 
@@ -15,8 +17,8 @@ public class JObject : MonoBehaviour
     private void Awake()
     {
         meshFilter = GetComponent<MeshFilter>();
-        var mesh = meshFilter.sharedMesh;
-        var meshData = Meshopt.BuildMeshlets(mesh);
-        Debug.Log($"MeshData: {meshData.meshlets.Length}");
+        //var mesh = meshFilter.sharedMesh;
+        //var meshData = Meshopt.BuildMeshlets(mesh);
+        //Debug.Log($"MeshData: {meshData.meshlets.Length}");
     }
 }
