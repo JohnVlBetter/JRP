@@ -5,7 +5,7 @@ using Unity.Mathematics;
 
 using static Unity.Mathematics.math;
 
-[BurstCompile(FloatPrecision.Standard, FloatMode.Fast)]
+/*[BurstCompile(FloatPrecision.Standard, FloatMode.Fast)]
 public struct ForwardPlusTilesJob : IJobFor
 {
     [ReadOnly]
@@ -49,3 +49,4 @@ public struct ForwardPlusTilesJob : IJobFor
         tileData[headerIndex] = lightsInTileCount;
     }
 }
+*/

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -56,7 +55,6 @@ public class Meshopt
 
     public struct MeshData
     {
-        public long uuid;
         public Meshlet[] meshlets;
         public Vector3[] vertices;
         public Vector3[] normals;
@@ -118,7 +116,6 @@ public class Meshopt
         List<Vector4> tangents = new List<Vector4>();
         mesh.GetTangents(tangents);
 
-        meshData.uuid = mesh.name.GetHashCode();
         meshData.vertices = vertices.ToArray();
         meshData.normals = normals.ToArray();
         meshData.tangents = tangents.ToArray();
@@ -126,120 +123,5 @@ public class Meshopt
         meshData.meshletTriangles = meshletTrianglesUintList.ToArray();
         meshData.meshletVertices = meshletVerticesList.ToArray();
         return meshData;
-    }
-
-    public static bool BakeMeshDataToFile(Mesh mesh)
-    {
-        var data = BuildMeshlets(mesh);
-
-        string filePath = $"{Application.dataPath}/Bytes/{mesh.name}.bytes";
-        try
-        {
-            using FileStream fs = new FileStream(filePath, FileMode.Create);
-            using BinaryWriter bw = new BinaryWriter(fs);
-            bw.Write(data.uuid);
-
-            var bytes = StructToBytes(data.meshlets);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bytes = StructToBytes(data.vertices);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bytes = StructToBytes(data.normals);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bytes = StructToBytes(data.tangents);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bytes = StructToBytes(data.meshletTriangles);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bytes = StructToBytes(data.meshletVertices);
-            bw.Write(bytes.Length);
-            bw.Write(bytes);
-
-            bw.Close();
-            fs.Close();
-        }
-        catch (IOException e)
-        {
-            Debug.LogError(e.Message);
-            return false;
-        }
-        return true;
-    }
-
-    public static MeshData LoadMeshDataFromFile(string name)
-    {
-        string filePath = $"{Application.dataPath}/Bytes/{name}.bytes";
-        MeshData data = new MeshData();
-        try
-        {
-            using FileStream fs = new FileStream(filePath, FileMode.Open);
-            using BinaryReader br = new BinaryReader(fs);
-            data.uuid = br.ReadInt64();
-            data.meshlets = BytesToStructArray<Meshlet>(br.ReadBytes(br.ReadInt32()));
-            data.vertices = BytesToStructArray<Vector3>(br.ReadBytes(br.ReadInt32()));
-            data.normals = BytesToStructArray<Vector3>(br.ReadBytes(br.ReadInt32()));
-            data.tangents = BytesToStructArray<Vector4>(br.ReadBytes(br.ReadInt32()));
-            data.meshletTriangles = BytesToStructArray<uint>(br.ReadBytes(br.ReadInt32()));
-            data.meshletVertices = BytesToStructArray<uint>(br.ReadBytes(br.ReadInt32()));
-            br.Close();
-            fs.Close();
-        }
-        catch (IOException e)
-        {
-            Debug.LogError(e.Message);
-        }
-        return data;
-    }
-
-    private static byte[] StructToBytes<T>(T[] list) where T : struct
-    {
-        T t = list[0];
-        Int32 size = Marshal.SizeOf(t);
-        IntPtr buffer = Marshal.AllocHGlobal(size);
-        byte[] bytes = new byte[size * list.Length];
-        try
-        {
-            int ptr = 0;
-            foreach (T t2 in list)
-            {
-                Marshal.StructureToPtr(t2, buffer, false);
-                Marshal.Copy(buffer, bytes, ptr, size);
-                ptr += size;
-            }
-            return bytes;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(buffer);
-        }
-    }
-
-    public static T[] BytesToStructArray<T>(byte[] bytes) where T : struct
-    {
-        Int32 size = Marshal.SizeOf(typeof(T));
-        IntPtr buffer = Marshal.AllocHGlobal(size);
-        int count = bytes.Length / size;
-        T[] array = new T[count];
-        try
-        {
-            for (int i = 0; i < count; i++)
-            {
-                Marshal.Copy(bytes, i * size, buffer, size);
-                array[i] = (T)Marshal.PtrToStructure(buffer, typeof(T));
-            }
-            return array;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(buffer);
-        }
     }
 }

@@ -1,13 +1,11 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class JObject : MonoBehaviour
 {
-    public uint jMeshID;
+    public JMaterial material;
+    public JMesh mesh;
 
-    private JMaterial material;
-    private JMesh mesh;
+    public int jMeshID;
 
 #if UNITY_EDITOR
     private MeshRenderer meshRenderer;
@@ -17,8 +15,7 @@ public class JObject : MonoBehaviour
     private void Awake()
     {
         meshFilter = GetComponent<MeshFilter>();
-        //var mesh = meshFilter.sharedMesh;
-        //var meshData = Meshopt.BuildMeshlets(mesh);
-        //Debug.Log($"MeshData: {meshData.meshlets.Length}");
+        meshRenderer = GetComponent<MeshRenderer>();
+        mesh = new JMesh(jMeshID);
     }
 }

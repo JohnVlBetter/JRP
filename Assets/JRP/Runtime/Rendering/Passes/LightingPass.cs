@@ -171,7 +171,7 @@ public partial class LightingPass
         {
             tileData = new NativeArray<int>(
                 TileCount * tileDataSize, Allocator.TempJob);
-            forwardPlusJobHandle = new ForwardPlusTilesJob
+            /*forwardPlusJobHandle = new ForwardPlusTilesJob
             {
                 lightBounds = lightBounds,
                 tileData = tileData,
@@ -182,7 +182,7 @@ public partial class LightingPass
                 maxLightsPerTile = requiredMaxLightsPerTile,
                 tilesPerRow = tileCount.x,
                 tileDataSize = tileDataSize
-            }.ScheduleParallel(TileCount, tileCount.x, default);
+            }.ScheduleParallel(TileCount, tileCount.x, default);*/
         }
     }
 
