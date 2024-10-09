@@ -2797,6 +2797,16 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1649787578331486591, guid: 9f67de9949187ef45bfadf7e99526807,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1840643275252193452, guid: 9f67de9949187ef45bfadf7e99526807,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3265616049198039910, guid: 9f67de9949187ef45bfadf7e99526807,
         type: 3}
       propertyPath: m_ScaleInLightmap
@@ -2861,6 +2871,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: chair
+      objectReference: {fileID: 0}
+    - target: {fileID: 7661067346792899955, guid: 9f67de9949187ef45bfadf7e99526807,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

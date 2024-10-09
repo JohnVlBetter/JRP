@@ -42,7 +42,7 @@ public class PrefabProcesser : MonoBehaviour
         }
     }
 
-    private static void ProcessMesh(GameObject prefab, MeshFilter mf)
+    private static void ProcessMesh(GameObject prefab, MeshFilter mf, bool forceUpdate = false)
     {
         var mesh = mf.sharedMesh;
         //Debug.Log($"MeshData: {meshData.meshlets.Length}");
@@ -52,29 +52,13 @@ public class PrefabProcesser : MonoBehaviour
             jo = prefab.AddComponent<JObject>();
         }
         jo.jMeshID = GetMeshHashCode(mesh);
-        //Debug.Log($"MeshID: {jo.jMeshID}");
-        var meshData = Meshopt.BuildMeshlets(mesh);
-        //Debug.Log($"MeshData: {meshData.meshlets.Length}");
-        //Debug.Log($"MeshData: {meshData.vertices.Length}");
-        //Debug.Log($"MeshData: {meshData.normals.Length}");
-        //Debug.Log($"MeshData: {meshData.tangents.Length}");
-        //Debug.Log($"MeshData: {meshData.meshletTriangles.Length}");
-        //Debug.Log($"MeshData: {meshData.meshletVertices.Length}");
-        //Debug.Log($"MeshData: {meshData.normals[0]}");
-        //Debug.Log($"MeshData: {meshData.vertices[1]}");
-        //Debug.Log($"MeshData: {meshData.meshletTriangles[2]}");
-        //Debug.Log($"--------------------------------------------");
-        SaveMeshDataToFile(meshData, jo.jMeshID);
-        //var data = LoadMeshDataFromFile(jo.jMeshID);
-        //Debug.Log($"MeshData: {data.meshlets.Length}");
-        //Debug.Log($"MeshData: {data.vertices.Length}");
-        //Debug.Log($"MeshData: {data.normals.Length}");
-        //Debug.Log($"MeshData: {data.tangents.Length}");
-        //Debug.Log($"MeshData: {data.meshletTriangles.Length}");
-        //Debug.Log($"MeshData: {data.meshletVertices.Length}");
-        //Debug.Log($"MeshData: {data.normals[0]}");
-        //Debug.Log($"MeshData: {data.vertices[1]}");
-        //Debug.Log($"MeshData: {data.meshletTriangles[2]}");
+        string filePath = $"{Application.dataPath}/Res/JMesh/{jo.jMeshID.ToString()}.jmesh";
+        if (forceUpdate || !File.Exists(filePath))
+        {
+            Debug.Log($"Updating mesh data for {prefab.name}");
+            var meshData = Meshopt.BuildMeshlets(mesh);
+            SaveMeshDataToFile(meshData, jo.jMeshID);
+        }
     }
 
     private static int GetMeshHashCode(Mesh mesh)
